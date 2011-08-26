@@ -1,0 +1,16 @@
+{
+  "name": "shortfeedz",
+  "description": "short cut urls to custom twitter filters",
+  "version": "0.0.1",
+  "author": "Matthew D. Howell <matthewdhowell@gmail.com> (voidrunner.com)",
+  "main": "shortfeedz",
+  "directories": {
+    "lib": ""
+  },
+  "scripts": {
+    "test": "nodeunit test"
+  },
+  "engines": {
+    "node": "0.2.6"
+  }
+}
