@@ -9,11 +9,10 @@
 var args = process.argv.slice();
 
 // Command line args
-var OAUTHCONFIG = args[2],
-    KEYWORD = args[3] || "beyonce";
+var KEYWORD = args[3] || "beyonce";
 
-if (!OAUTHCONFIG)
-  return console.log("Usage: node server.js <keyword>");
+if (!args[3])
+  console.log("Using keyword Beyonce");
 
 var HOST="127.0.0.1",
     PORT=4444,
@@ -22,6 +21,7 @@ var HOST="127.0.0.1",
     fs = require('fs'),
     http = require('http'),
     io = require('socket.io'),
+    oauth_config = require('./oauth_config'),
     OAuth = require('oauth').OAuth,
     StreamParser = require('./StreamParser.js');
 
@@ -30,9 +30,10 @@ var Twitter = module.exports = function (config_path) {
   var that = this;
   this.name = "Twitter";
   this.parser = new StreamParser('\r\n');
-  this.loadConfig(config_path, function (json) {
+  /*this.loadConfig(config_path, function (json) {
     that.onConfigLoaded(json);
-  });
+  });*/
+  this.onConfigLoaded(oauth_config);
 };
 
 Twitter.prototype.loadConfig = function (path, cb) {
@@ -91,47 +92,8 @@ Twitter.prototype.initOauth = function () {
     });
   });
   this.request.end();
-  /*
-  this.oauth.getOAuthRequestToken(function (error, oauth_token, oauth_token_secret, results) {
-    if (error) {
-      sys.puts('error : ' + error.statusCode + ' ' + error.data);
-    } else {
-      that.onOAuthRequestToken(error, oauth_token, oauth_token_secret, results);
-    }
-  });
-  */
-};
-/*
-Twitter.prototype.onOAuthRequestToken = function (error, oauth_token, oauth_token_secret, results) {
-  if (error) {
-    sys.puts('error : ' + error.statusCode + ' ' + error.data)
-  } else {
-    sys.puts('oauth_token :' + oauth_token);
-    sys.puts('oauth_token_secret :' + oauth_token_secret);
-    sys.puts('Request token results :' + sys.inspect(results));
-    sys.puts("Requesting access token");
-    
-    var that = this;
-    this.oauth.getOAuthAccessToken(oauth_token, oauth_token_secret, function (error, oauth_access_token, oauth_access_token_secret, results2) {
-      that.onOAuthAccessToken(error, oauth_access_token, oauth_access_token_secret, results2);
-    });
-  }
-};
 
-Twitter.prototype.onOAuthAccessToken = function (error, oauth_access_token, oauth_access_token_secret, results2) {
-  if (error) {
-    sys.puts('error : ' + error.statusCode + ' ' + error.data);
-  } else {
-    sys.puts('oauth_access_token :' + oauth_access_token);
-    sys.puts('oauth_token_secret :' + oauth_access_token_secret);
-    sys.puts('Access token results :' + sys.inspect(results2));
-    sys.puts("Requesting resource");
-    var that = this;
-    this.oauth.getProtectedResource("http://stream.twitter.com/1/statuses/filter.json?track=" + KEYWORD, "GET", "6273562-TEd79uPCTS907WXBuK9lhidSsaDIhYCrDGplHGokuc", "w7wu5X6kv2EMicL74n84rCfj711z8sT8iE9d9X8k", function (error, data, response) {
-      that.onProtectedResource(error, data, response); 
-    });
-  }
-};*/
+};
 
 Twitter.prototype.onRequestData = function (chunk) {
   this.parser.parseChunk(chunk);
