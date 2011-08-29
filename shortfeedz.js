@@ -59,6 +59,9 @@ Twitter.prototype.onConfigLoaded = function (json) {
   this.accessTokenUrl = "https://api.twitter.com/oauth/access_token";
   this.consumerKey = this.config.consumer_key;
   this.consumerSecret = this.config.consumer_secret;
+  this.accessToken = this.config.access_token;
+  this.accessTokenSecret = this.config.access_token_secret;
+  
   this.headers = {
     'Accept': '*/*',
     'Connection': 'close',
@@ -78,19 +81,30 @@ Twitter.prototype.initOauth = function () {
                          null,
                          "HMAC-SHA1");
   
-  this.request = this.oauth.get("http://stream.twitter.com/1/statuses/filter.json?track=" + KEYWORD, "6273562-TEd79uPCTS907WXBuK9lhidSsaDIhYCrDGplHGokuc", "w7wu5X6kv2EMicL74n84rCfj711z8sT8iE9d9X8k");
+  this.request = this.oauth.get("http://stream.twitter.com/1/statuses/filter.json?track=" + KEYWORD, this.accessToken, this.accessTokenSecret);
   
   this.parser.addListener('data', this.writeToStream);
   
   this.request.addListener('response', function (response) {
+    
+    if(response.statusCode !== 200) {
+      console.error('\nO(aut)h no! Twitter stream request didn\'t return a 200.\n\n' + 
+                    'Headers follow:' + response.client._httpMessage._header + 
+                    '\nStatus: ' + response.statusCode);
+    }
+    
     response.setEncoding('utf8');
+    
     response.addListener('data', function (chunk) {
       that.parser.parseChunk(chunk);
     });
+    
     response.addListener('end', function () {
       console.log('--- END ---');
     });
+    
   });
+  
   this.request.end();
 
 };
@@ -106,9 +120,9 @@ Twitter.prototype.onRequestError = function (err) {
 
 
 //////////////////////////////
-var	count = 0,
+var count = 0,
 	lastc = 0;
-
+ 
 Twitter.prototype.writeToStream = function (data) {
 	count++;
 	if ( typeof data === 'string' )
