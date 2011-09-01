@@ -13,12 +13,18 @@ console.log("Using keyword " + KEYWORD);
 var HOST="127.0.0.1",
     PORT=4444,
     VERSION='0.0.2',
+    ShortFeedz = require('./lib/ShortFeedz'),
     oauth_config = require('./oauth_config'),
     TwitReader = require('./lib/TwitReader');
 
-var arg_obj = {'oauth_config' : oauth_config,
-               'keywords' :[KEYWORD]};
+// var arg_obj = {'oauth_config' : oauth_config,
+//                'keywords' :[KEYWORD]};
+  
+// var t = new TwitReader(arg_obj);
 
-var t = new TwitReader(arg_obj);
 
+var app = require('express').createServer(HOST);
 
+app.get('/', ShortFeedz.routes.root);
+
+app.listen(PORT);
