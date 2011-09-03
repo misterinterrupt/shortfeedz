@@ -4,14 +4,21 @@
  * a terms string and an id
  */
 
-var Stream = module.exports = function Stream(redisClient, terms) {
+var Stream = module.exports = function Stream(redisClient, terms=null) {
+  
   this.redisClient = redisClient;
-  this.terms = terms;
-  this.createdAt = new Date;
+  
+  if (terms != null) { // normal creation
+    this.terms = terms;
+    this.createdAt = new Date;
+  } else { // if we are going to manually set properties after using .get
+    this.terms = null;
+    this.createdAt = null;
+  }
+  
   this.redisClient.on("error", function (err) {
     console.log("Redis error " + that.redisClient.host + ":" + that.redisClient.port + " - " + err);
   });
-  
 };
 
 Stream.prototype.save = function (fn) {
