@@ -7,13 +7,12 @@ var assert  = require('assert'),
 
 var streamTests = flow.define(
   function testSetup (redisClient) {
-    console.log('setup ');
+    console.log('setup for ' + __filename);
     this.client = redisClient;
     this();
   },
   function testSave (err) {
     if(err) throw err;
-    console.log('.');
     this.s1 = new Stream(this.client, 'save');  
     this.s1.save(this);
   },
@@ -42,11 +41,11 @@ var streamTests = flow.define(
     if(err) throw err;
     var strms = {};
     Stream.getAll(this.client, 0, this);
-    this();
   },
   function testGetAllReturn (err, streams) {
     this.allStreams = streams;
-    console.dir(this.allStreams);
+    assert.equal(Object.prototype.toString.call(this.allStreams), '[object Array]', 'An array was not returned from Stream.getAll');
+    assert.equal(this.allStreams.length > 0, true, 'Stream.getAll returned 0 objects')
     console.log('A users streams can be retrieved from redis via Stream.getAll');
     this();
   },
