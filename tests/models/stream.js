@@ -7,7 +7,8 @@ var assert  = require('assert'),
 
 var streamTests = flow.define(
   function testSetup (redisClient) {
-    console.log('setup for ' + __filename);
+    console.log('setup for stream model');
+    console.log('run from: ' + __filename);
     this.client = redisClient;
     this();
   },
@@ -32,8 +33,8 @@ var streamTests = flow.define(
   function testGetReturn (err, stream) {
     if(err) throw err;
     this.s2 = stream;
-    assert.equal(typeof this.s2.terms, 'string', 'no terms on stream object after get');
-    assert.equal(typeof this.s2.createdAt, 'string', 'no createdAt on stream object after get');
+    assert.equal(typeof this.s2.terms, 'string', 'prop terms missing on stream object after get');
+    assert.equal(typeof this.s2.createdAt, 'string', 'prop createdAt missing on stream object after get');
     console.log('A stream can be retrieved from redis via Stream.get');
     this();
   },
@@ -45,7 +46,7 @@ var streamTests = flow.define(
   function testGetAllReturn (err, streams) {
     this.allStreams = streams;
     assert.equal(Object.prototype.toString.call(this.allStreams), '[object Array]', 'An array was not returned from Stream.getAll');
-    assert.equal(this.allStreams.length > 0, true, 'Stream.getAll returned 0 objects')
+    assert.equal(this.allStreams.length > 0, true, 'Stream.getAll returned 0 objects');
     console.log('A users streams can be retrieved from redis via Stream.getAll');
     this();
   },
@@ -60,5 +61,4 @@ client.on('ready', function () {
   console.log("Redis connected at " + client.host + ":" + client.port);
   streamTests(this);
 });
-
 
