@@ -1,14 +1,15 @@
+var flow = require('flow');
 /*
  * crud for stream objects
  * right now, these are just 
  * a terms string and an id
  */
 
-var Stream = module.exports = function Stream(redisClient, terms=null) {
+var Stream = module.exports = function Stream(redisClient, terms) {
   
   this.redisClient = redisClient;
   
-  if (terms != null) { // normal creation
+  if (typeof terms != 'undefined') { // normal creation
     this.terms = terms;
     this.createdAt = new Date;
   } else { // if we are going to manually set properties after using .get
@@ -46,8 +47,39 @@ Stream.prototype.destroy = function (fn) {
   exports.destroy(this.id, fn);
 };
 
-Stream.prototype.countUserStreams = function (userId) {
-  return this.redisClient.llen('users:' + id + ':streams');
+Stream.prototype.countUserStreams = function (redisClient, userId, fn) {
+  redisClient.llen('users:' + userId + ':streams', function (err, reply) {
+    fn(reply);
+  });
+};
+
+module.exports.getAll = function(redisClient, userId, fn) {
+  var cb = fn;
+  var collect = flow.define(
+    function (redisClient, userId, fn) {
+      redisClient.lrange('users:' + userId  + ':streams', 0, -1, this);
+    },
+    function(err, reply) {
+      if(err) throw err;
+      if(reply.prototype.toString.call(obj) === '[object Array]') {
+        flow.serialForEach(
+          function (val) {
+            redisClient.hmget('streams:' + val, this);
+          },
+          function (err, reply) {
+            if(err) throw err;
+            // get a hash of our stream
+            this.streams.push(reply);
+          },
+          function () { // finished
+            cb(this.streams);
+          }
+        ), // end serialForEach
+      } else {
+        // nothing in the reply.. 
+      }
+    }); // end flow.define
+  collect();
 };
 
 module.exports.get = function(redisClient, id, fn) {
