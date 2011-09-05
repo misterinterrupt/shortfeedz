@@ -1,2 +1,6 @@
 h2 User Account
 p Welcome!
+h3 Your Streams
+ul#stream
+  - each stream, id in streams
+    li(class='stream-' + id) #{stream.terms}
