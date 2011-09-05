@@ -26,19 +26,26 @@ Stream.prototype.save = function (fn) {
   var that = this;
   this.redisClient.incr('global:nextStreamId', function(err, reply) {
     that.id = reply;
-    that.redisClient.hmset('streams:'+ that.id, 'terms', that.terms, 'createdAt', that.createdAt);
+    
+    var streamProps = {
+        'id' : that.id,
+        'terms' : that.terms,
+        'createdAt' : that.createdAt
+      };
+    
+    if(typeof that.updatedAt !== 'undefined') streamProps.updatedAt = that.updatedAt;
+    
+    that.redisClient.hmset('streams:' + that.id, streamProps);
     // replace ids with a real user id when users are set up
     that.redisClient.lpush('users:0:streams', that.id);
-    fn(err, that.id);
+    fn(err, that);
   });
 };
 
 Stream.prototype.update = function(data, fn){
   this.updatedAt = new Date;
-  for (var key in data) {
-    if (undefined != data[key]) {
-      this[key] = data[key];
-    }
+  if (undefined != data.terms) {
+    this.terms = data.terms;
   }
   this.save(fn);
 };
@@ -54,38 +61,56 @@ Stream.prototype.countUserStreams = function (redisClient, userId, fn) {
 };
 
 module.exports.getAll = function(redisClient, userId, fn) {
-  var cb = fn;
+  
   var collect = flow.define(
-    function (redisClient, userId, fn) {
-      redisClient.lrange('users:' + userId  + ':streams', 0, -1, this);
+    function (client, userId, cb) {
+      this.cb = cb;
+      this.client = client;
+      this.client.lrange('users:' + userId  + ':streams', 0, -1, this);
     },
-    function(err, reply) {
+    function (err, reply) {
       if(err) throw err;
-      if(reply.prototype.toString.call(obj) === '[object Array]') {
-        flow.serialForEach(
+      
+      // we are going to need some of this scope to come along for serialForEach
+      var streams = this.streams = [],
+          cb = this.cb,
+          innerClient = this.client;
+          
+      if(Object.prototype.toString.call(reply) === '[object Array]') {
+        
+        flow.serialForEach(reply, 
           function (val) {
-            redisClient.hmget('streams:' + val, this);
+            this.client = innerClient;
+            this.client.hgetall('streams:' + val, this);
           },
           function (err, reply) {
             if(err) throw err;
             // get a hash of our stream
-            this.streams.push(reply);
+            streams.push(reply);
           },
-          function () { // finished
-            cb(this.streams);
+          function (err) { // finished
+            if(err) throw err;
+            //console.dir(streams);
+            cb(null, streams);
           }
-        ), // end serialForEach
+        ); // end serialForEach
+        
       } else {
-        // nothing in the reply.. 
+        // user has no streams reply.. 
       }
-    }); // end flow.define
-  collect();
+      
+    }
+  ); // end flow.define
+  collect(redisClient, 0, fn);
 };
 
 module.exports.get = function(redisClient, id, fn) {
+  var client = redisClient;
   redisClient.hgetall('streams:'+id, function(err, reply) {
-    var stream = reply;
+    var stream = new Stream(client);
     stream.id = id;
+    stream.createdAt = reply.createdAt;
+    stream.terms = reply.terms;
     fn(null, stream);
   });
 };
