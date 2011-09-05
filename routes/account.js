@@ -1,3 +1,6 @@
+var Stream = require('../models/stream')
+    redis = require('redis');
+
 function protect(req, res, next) {
   if( req.isAuthenticated() ) next();
   else {
@@ -20,7 +23,12 @@ module.exports = function (app) {
   // User accounts entry point
   app.get('/account', protect, function (req, res) {
     // user account home
-    res.render('account/index');
+    var client = redis.createClient();
+    client.on('ready', function (err) {
+        streamCollection = Stream.getAll(client, 0, function (err, streams) {
+        res.render('account/index', { streams : streams });
+      });
+    });
   });
   
   // form for creation of new stream
