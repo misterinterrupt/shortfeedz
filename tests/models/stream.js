@@ -70,6 +70,21 @@ var streamTests = flow.define(
     console.log('A stream\'s props are updated via Stream.update');
     this();
   },
+  function testDestroy (err) {
+    if(err) throw err;
+    this.s5 = new Stream(this.client, 'destroy'),
+    id = this.s5.id,
+    checkDestroyed = this;
+    this.s5.destroy(function () {
+      Stream.get(id, checkDestroyed);
+    });
+  },
+  function testDestroy (err, stream) {
+    if(err) throw err;
+    assert.equal(stream, 'undefined', 'stream was not destroyed by Stream.destroy');
+    console.log('A stream is removed from redis via Stream.destroy');
+    this();
+  },
   function testTearDown (err) {
     if(err) throw err;
     console.log('tearDown')
