@@ -1,6 +1,18 @@
 h2 User Account
 p Welcome!
-h3 Your Streams
-ul#stream
-  - each stream, id in streams
-    li(class='stream-' + id) #{stream.terms}
+div.yourStreams
+  h3 Your Streams
+  ul#stream
+    - each stream, id in streams
+      li(class='stream-' + id) 
+        p.terms terms: #{stream.terms}
+          span.tip
+                  |  click terms to edit  
+        p.created created: #{stream.createdAt}
+        p.updated updated: #{stream.lastUpdated}
+        div(class='realtime-display-' + id)
+div.newStream
+  h3 Create a new Stream
+  form(method='post', action='/account/stream')#newStream
+    input(name='terms')
+    input(type='submit', value='create')
