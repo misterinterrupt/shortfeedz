@@ -93,7 +93,7 @@ module.exports.getAll = function(redisClient, userId, fn) {
       
       // we are going to need some of this scope to come along for serialForEach
       var streams = this.streams = [],
-          cb = this.cb,
+          that = this,
           innerClient = this.client;
           
       if(Object.prototype.toString.call(reply) === '[object Array]') {
@@ -111,7 +111,7 @@ module.exports.getAll = function(redisClient, userId, fn) {
           function (err) { // finished
             if(err) throw err;
             //console.dir(streams);
-            cb(null, streams);
+            that(null, streams);
           }
         ); // end serialForEach
         
@@ -119,6 +119,10 @@ module.exports.getAll = function(redisClient, userId, fn) {
         // user has no streams reply.. 
       }
       
+    },
+    function (err, streams) {
+      if(err) throw err;
+      this.cb(null, streams);
     }
   ); // end flow.define
   collect(redisClient, 0, fn);
