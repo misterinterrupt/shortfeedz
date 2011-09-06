@@ -25,15 +25,24 @@ module.exports = function (app) {
     // user account home
     var client = redis.createClient();
     client.on('ready', function (err) {
-        streamCollection = Stream.getAll(client, 0, function (err, streams) {
+      Stream.getAll(client, 0, function (err, streams) {
+        if(err) throw err;
         res.render('account/index', { streams : streams });
       });
     });
   });
   
   // form for creation of new stream
-  app.get('/account/new', protect, function (req, res) {
-    res.render('account/new_stream', { stream : {} } );
+  app.post('/account/stream', protect, function (req, res) {
+    var terms = req.body.terms;
+    var client = redis.createClient();
+    client.on('ready', function (err) {
+      var stream = new Stream(client, terms);
+      stream.save(function (err, stream) {
+        if(err) throw err;
+        res.redirect('/account');
+      });
+    });
   });
   // post the form here
   app.post('/account/new', protect, function (req, res) {
