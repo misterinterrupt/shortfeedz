@@ -24,22 +24,42 @@ var Stream = module.exports = function Stream(redisClient, terms) {
 
 Stream.prototype.save = function (fn) {
   var that = this;
-  this.redisClient.incr('global:nextStreamId', function(err, reply) {
-    that.id = reply;
-    
-    var streamProps = {
-        'id' : that.id,
-        'terms' : that.terms,
-        'createdAt' : that.createdAt
-      };
-    
-    if(typeof that.updatedAt !== 'undefined') streamProps.updatedAt = that.updatedAt;
-    
-    that.redisClient.hmset('streams:' + that.id, streamProps);
-    // replace ids with a real user id when users are set up
-    that.redisClient.lpush('users:0:streams', that.id);
-    fn(err, that);
-  });
+  var saveIt = flow.define(
+    function (stream, cb) {
+      this.stream = stream;
+      // only increment if we need to, i.e. new vs update
+      if(typeof this.stream.id === 'undefined') {
+        this.stream.redisClient.incr('global:nextStreamId', this);
+      } else {
+        this(null, null);
+      }
+    },
+    function (err, id) {
+      if(err) throw err;
+      // only set id if there is an id to set
+      if(typeof id === 'number') this.stream.id = id;
+      
+      var streamProps = {
+          'id' : this.stream.id,
+          'terms' : this.stream.terms,
+          'createdAt' : this.stream.createdAt
+        };
+        
+      // set updatedAt if this was an update
+      if(typeof this.stream.updatedAt !== 'undefined') streamProps.updatedAt = this.stream.updatedAt;
+      
+      this.stream.redisClient.hmset('streams:' + this.stream.id, streamProps, this);
+    },
+    function (err) {
+      if(err) throw err;
+      // replace ids with a real user id when users are set up
+      this.stream.redisClient.lpush('users:0:streams', this.stream.id, this);
+    },
+    function (err) {
+      if(err) throw err;
+      fn(err, this.stream);
+    } ); // end flow.define
+  saveIt(that, fn)
 };
 
 Stream.prototype.update = function(data, fn){
@@ -51,7 +71,7 @@ Stream.prototype.update = function(data, fn){
 };
 
 Stream.prototype.destroy = function (fn) {
-  exports.destroy(this.id, fn);
+  module.exports.destroy(this.id, fn);
 };
 
 Stream.prototype.countUserStreams = function (redisClient, userId, fn) {
@@ -115,7 +135,7 @@ module.exports.get = function(redisClient, id, fn) {
   });
 };
 
-Stream.prototype.destroy = function(id, fn) {
+module.exports.destroy = function(id, fn) {
   
   if (this.get('streams:' + id)) {
     // replace ids with a real user id when users are set up
@@ -124,8 +144,4 @@ Stream.prototype.destroy = function(id, fn) {
   } else {
     fn(new Error('stream ' + id + ' does not exist'));
   }
-};
-
-Stream.prototype.finish = function() {
-  this.redisClient.quit();
 };
