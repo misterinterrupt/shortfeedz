@@ -144,20 +144,16 @@ module.exports.getAll = function(redisClient, userId, fn) {
 };
 
 module.exports.get = function(redisClient, id, fn) {
-  var client = redisClient;
   redisClient.hgetall('streams:' + id, function(err, reply) {
-    console.dir(reply);
-    
     if(err || reply === null) {
       fn(err, {});
     } else {
-      var stream = new Stream(client);
+      var stream = new Stream(redisClient);
       stream.id = reply.id;
       stream.createdAt = reply.createdAt;
       stream.terms = reply.terms;
       fn(null, stream);
     }
-    client = null;
   });
 };
 
@@ -171,9 +167,10 @@ module.exports.destroy = function(redisClient, id, fn) {
     } else {
       // replace ids with a real user id when users are set up
       client.lrem('users:0:streams:', -1, stream.id, function (err) {
-        // TODO:: hdel the 'streams:[id]' as well
-        client = null;
-        fn(err);
+        if(err) throw err;
+        client.del('streams:' + stream.id, function (err) {
+          fn(err);
+        });
       });
     }
   });
