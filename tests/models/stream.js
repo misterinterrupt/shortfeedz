@@ -84,14 +84,17 @@ var streamTests = flow.define(
         if(err) throw err;
         // to check redis directly for streams:[id] it will return null if it's gone
         // use: checkDestroyed.client.hexists('streams:' + id - 1, checkDestroyed);
-        console.dir(id);
         Stream.get(checkDestroyed.client, id, checkDestroyed);
       });
     });    
   },
   function testDestroyReturn (err, stream) {
     if(err) throw err;
-    assert.equal(stream, {}, 'stream was not destroyed by Stream.destroy');
+    this.s5 = stream;
+    assert.equal(typeof this.s5.id, 'undefined', 'stream was not destroyed by Stream.destroy');
+    assert.equal(typeof this.s5.createdAt, 'undefined', 'stream was not destroyed by Stream.destroy');
+    assert.equal(typeof this.s5.terms, 'undefined', 'stream was not destroyed by Stream.destroy');
+    
     console.log('A stream is removed from redis via Stream.destroy');
     this();
   },
