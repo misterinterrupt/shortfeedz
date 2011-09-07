@@ -20,33 +20,66 @@ function protect(req, res, next) {
 }
 
 module.exports = function (app) {
+  
   // User accounts entry point
+  // TODO:: stream based functionallity will eventually be split out to app.get('/account/stream')
   app.get('/account', protect, function (req, res) {
     // user account home
     var client = redis.createClient();
     client.on('ready', function (err) {
       Stream.getAll(client, 0, function (err, streams) {
         if(err) throw err;
+        client.quit();
+        client = null;
         res.render('account/index', { streams : streams });
       });
     });
+    
   });
   
-  // form for creation of new stream
+  // post creation of new stream
   app.post('/account/stream', protect, function (req, res) {
     var terms = req.body.terms;
     var client = redis.createClient();
     client.on('ready', function (err) {
+      if(err) throw err;
       var stream = new Stream(client, terms);
       stream.save(function (err, stream) {
         if(err) throw err;
+        client.quit();
+        client = null;
+        terms = null;
         res.redirect('/account');
       });
     });
   });
-  // post the form here
-  app.post('/account/new', protect, function (req, res) {
-    var data = req.body.post;
-    
+  
+  // update a stream
+  app.put('/account/stream/:id', protect, function (req, res) {
+    var data = req.body.put;
+    var client = redis.createClient();
+    client.on('ready', function (err) {
+      if(err) throw err;
+      //stream.update();
+      data = null;
+      client = null;
+      res.redirect('/account');
+    });
+  });
+  
+  // delete a stream
+  app.del('/account/stream/:id', protect, function (req, res) {
+    var id = req.body.id;
+    var client = redis.createClient();
+    client.on('ready', function (err) {
+      if(err) throw err;
+      stream.destroy(id, function(err) {
+        if(err) throw err;
+        client.quit();
+        id = null;
+        client = null;
+        res.redirect('/account');
+      });
+    });
   });
 }
