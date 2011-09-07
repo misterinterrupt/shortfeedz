@@ -3,7 +3,7 @@ var assert  = require('assert'),
     Stream = require('../../models/stream'),
     redis = require('redis'),
     client = redis.createClient();
-// get a testing framework!  ;)
+// get a testing framework! these are linearly dependant :(
 
 var streamTests = flow.define(
   function testSetup (redisClient) {
@@ -58,7 +58,7 @@ var streamTests = flow.define(
     update = function (err, stream) {
         s3 = stream;
         s3.update(params, testReturn);
-      };    
+      };
     Stream.get(this.client, 1, update);
   },
   function testUpdateReturn (err, stream) {
@@ -72,16 +72,26 @@ var streamTests = flow.define(
   },
   function testDestroy (err) {
     if(err) throw err;
-    this.s5 = new Stream(this.client, 'destroy'),
-    id = this.s5.id,
-    checkDestroyed = this;
-    this.s5.destroy(function () {
-      Stream.get(id, checkDestroyed);
-    });
+    // create a stream
+    this.s5 = new Stream(this.client, 'destroy');
+    var checkDestroyed = this;
+    // save a stream
+    this.s5.save(function (err, stream) {
+      if(err) throw err;
+      var id = stream.id;
+      // test out stream.destroy
+      checkDestroyed.s5.destroy(function (err) {
+        if(err) throw err;
+        // to check redis directly for streams:[id] it will return null if it's gone
+        // use: checkDestroyed.client.hexists('streams:' + id - 1, checkDestroyed);
+        console.dir(id);
+        Stream.get(checkDestroyed.client, id, checkDestroyed);
+      });
+    });    
   },
-  function testDestroy (err, stream) {
+  function testDestroyReturn (err, stream) {
     if(err) throw err;
-    assert.equal(stream, 'undefined', 'stream was not destroyed by Stream.destroy');
+    assert.equal(stream, {}, 'stream was not destroyed by Stream.destroy');
     console.log('A stream is removed from redis via Stream.destroy');
     this();
   },
