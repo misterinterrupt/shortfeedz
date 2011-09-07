@@ -65,13 +65,12 @@ Stream.prototype.save = function (fn) {
       // replace ids with a real user id when users are set up
       this.stream.redisClient.lrange('users:0:streams', 0, -1, function (err, list) {
         if (Object.prototype.toString.call(list) === '[object Array]') {
-          list.forEach(function (val, i, arr) {
-            if(val === that.stream.id) {
-              that.stream.redisClient.lpush('users:0:streams', that.stream.id, that);
-            } else if (i === arr.length -1) {
+          for(var i=0; i<list.length; i++) {
+            if(list[i] === that.stream.id) {
               that();
             }
-          });
+          }
+          that.stream.redisClient.lpush('users:0:streams', that.stream.id, that);
         } else {
           that();
         }
@@ -80,7 +79,7 @@ Stream.prototype.save = function (fn) {
     // get back to business
     function (err) {
       if(err) throw err;
-      fn(err, this.stream);
+      fn(null, this.stream);
     } ); // end flow.define
   saveIt(that, fn)
 };
@@ -113,39 +112,26 @@ module.exports.getAll = function(redisClient, userId, fn) {
     },
     function (err, reply) {
       if(err) throw err;
-      
       // we are going to need some of this scope to come along for serialForEach
-      var streams = this.streams = [],
-          that = this,
-          innerClient = this.client;
-          
+      var that = this;
+      this.streams = [];
+      
       if(Object.prototype.toString.call(reply) === '[object Array]') {
         
-        flow.serialForEach(reply, 
-          function (val) {
-            this.client = innerClient;
-            this.client.hgetall('streams:' + val, this);
-          },
-          function (err, reply) {
-            if(err) throw err;
-            // get a hash of our stream
-            streams.push(reply);
-          },
-          function (err) { // finished
-            if(err) throw err;
-            //console.dir(streams);
-            that(null, streams);
-          }
-        ); // end serialForEach
+        var multi = this.client.multi();
         
+        for (var i=0; i<reply.length; i++) {
+          multi.hgetall('streams:' + reply[i]);
+        }
+        multi.exec(function(err, replies){
+          if(err) throw err;
+          that.streams = replies;
+          that.cb(null, that.streams);
+        });
       } else {
         // user has no streams reply.. 
+        this.cb(null, this.streams);
       }
-      
-    },
-    function (err, streams) {
-      if(err) throw err;
-      this.cb(null, streams);
     }
   ); // end flow.define
   collect(redisClient, 0, fn);
@@ -153,25 +139,33 @@ module.exports.getAll = function(redisClient, userId, fn) {
 
 module.exports.get = function(redisClient, id, fn) {
   var client = redisClient;
-  redisClient.hgetall('streams:'+id, function(err, reply) {
-    var stream = new Stream(client);
-    stream.id = id;
-    stream.createdAt = reply.createdAt;
-    stream.terms = reply.terms;
-    fn(null, stream);
+  redisClient.hgetall('streams:' + id, function(err, reply) {
+    if(err || reply === null) {
+      fn(err, {});
+    } else {
+      var stream = new Stream(client);
+      stream.id = reply.id;
+      stream.createdAt = reply.createdAt;
+      stream.terms = reply.terms;
+      fn(null, stream);
+    }
     client = null;
   });
 };
 
 module.exports.destroy = function(redisClient, id, fn) {
   var client = redisClient;
-  client.get('streams:' + id, function (err, stream) {
+  client.hgetall('streams:' + id, function (err, stream) {
     if(err) {
-      fn(new Error('stream ' + id + ' does not exist'));
+      throw err;
+    } else if (typeof stream.id === 'undefined'){
+      fn(new Error('stream ' + stream.id + ' does not exist'));
     } else {
       // replace ids with a real user id when users are set up
-      client.rem('users:0:streams:', 1, id, function (err) {
-        fn();
+      client.lrem('users:0:streams:', -1, stream.id, function (err) {
+        // TODO:: hdel the 'streams:[id]' as well
+        client = null;
+        fn(err);
       });
     }
   });
