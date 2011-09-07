@@ -65,12 +65,18 @@ Stream.prototype.save = function (fn) {
       // replace ids with a real user id when users are set up
       this.stream.redisClient.lrange('users:0:streams', 0, -1, function (err, list) {
         if (Object.prototype.toString.call(list) === '[object Array]') {
+          var inList = false;
           for(var i=0; i<list.length; i++) {
             if(list[i] === that.stream.id) {
-              that();
+              inList = true;
+              break;
             }
           }
-          that.stream.redisClient.lpush('users:0:streams', that.stream.id, that);
+          if(!inList){
+            that.stream.redisClient.lpush('users:0:streams', that.stream.id, that);
+          } else {
+            that();
+          }
         } else {
           that();
         }
@@ -140,6 +146,8 @@ module.exports.getAll = function(redisClient, userId, fn) {
 module.exports.get = function(redisClient, id, fn) {
   var client = redisClient;
   redisClient.hgetall('streams:' + id, function(err, reply) {
+    console.dir(reply);
+    
     if(err || reply === null) {
       fn(err, {});
     } else {
