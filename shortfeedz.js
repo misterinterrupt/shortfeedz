@@ -7,7 +7,7 @@
 // in order to get args, use this:
 var args = process.argv.slice();
 
-var KEYWORD = args[2] || ['Beyonce'];
+var KEYWORD = args[2] || ['global'];
 console.log("Using keyword " + KEYWORD);
 
 var HOST = "127.0.0.1",
@@ -24,22 +24,19 @@ var HOST = "127.0.0.1",
                    'keywords' :[KEYWORD]};
 
     var twit = new TwitReader(arg_obj),
-        parser = new StreamParser(';');
+        stdin = process.stdin,
+        stdout = process.stdout;
 
-    console.log('resuming stdin');
+    stdout.write('\nType a search string and hit enter to change this running feed. \n');
 
-    process.stdin.resume();
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', function (chunk) {
-      process.stdout.write('got some data: ' + chunk);
-      parser.parseChunk(chunk);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+    stdin.on('data', function (chunk) {
+      stdout.write('changing stream to: ' + chunk.toString());
+      arg_obj['keywords'] = [chunk.toString().trim()];
+      twit = null;  
+      twit = new TwitReader(arg_obj);
     });
-    parser.on('data', function (data) {
-      arg_obj.keywords = data;
-      process.stdout.write('got some data: ' + data);
-      twit = new TwitReader(arg_object);
-    })
-
 
 
 var app = module.exports = express.createServer();
