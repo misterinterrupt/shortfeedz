@@ -18,11 +18,13 @@ div#yourStreamsTitle
 div#yourStreams
   ul#streams
     - each stream, id in streams
-      li(class='stream-' + id) 
+      li(id='stream-' + stream.id) 
         p 
-          span(id=id).terms #{stream.terms}
+          span(id=stream.id).terms #{stream.terms}
           span.tip
-                  |  click to edit  
+                  |  click to edit
+          span.delete
+                  |  \[x\]
         p.created created: #{stream.createdAt}
         p.updated updated: #{stream.updatedAt}
         div(class='realtime-display-' + id)

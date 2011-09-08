@@ -37,8 +37,10 @@ module.exports = function (app) {
     
   });
   
+  // TODO:: protect these routes!
+
   // post creation of new stream
-  app.post('/account/stream', protect, function (req, res) {
+  app.post('/account/stream', function (req, res) {
     var terms = req.body.terms;
     var client = redis.createClient();
     client.on('ready', function (err) {
@@ -47,28 +49,44 @@ module.exports = function (app) {
       stream.save(function (err, stream) {
         if(err) throw err;
         client.quit();
-        client = null;
-        terms = null;
+        terms = client = null;
         res.redirect('/account');
       });
     });
   });
-  
+
+
+    
   // update a stream
-  app.put('/account/stream/:id', protect, function (req, res) {
-    var data = req.body.put;
-    var client = redis.createClient();
+  app.put('/account/stream/:id([0-9]+)', function (req, res) {
+    var terms = req.body.terms,
+        updateId = req.params.id,
+        client = redis.createClient();
+    console.log(updateId);
     client.on('ready', function (err) {
       if(err) throw err;
-      //stream.update();
-      data = null;
-      client = null;
-      res.redirect('/account');
+      Stream.get(client, updateId, function (err, stream) {
+        if(err) {
+          console.error(err);
+          res.send(500);
+        }
+        stream.update({terms:terms}, function(err, stream) {
+          if(err) {
+            console.error(err);
+            res.send(500);
+          }
+          delete stream.redisClient;
+          res.contentType('json');
+          res.send(stream);
+          client.quit();
+          terms = updateId = client = null;
+        });
+      });
     });
   });
   
   // delete a stream
-  app.del('/account/stream/:id', protect, function (req, res) {
+  app.del('/account/stream/:id([0-9]+)', protect, function (req, res) {
     var id = req.body.id;
     var client = redis.createClient();
     client.on('ready', function (err) {
