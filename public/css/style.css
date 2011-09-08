@@ -78,11 +78,10 @@ h1, h2, h3{
   position: fixed;
   background-color: #000;
   z-index: 14;
-  top: 9.8em;
+  top: 9em;
   left: 2em;
-  width: 24em;
-  border-left: 1px dashed #6B006B;
-  border-right: 1px dashed #6B006B;
+  width: 6em;
+  border: 1px dashed #6B006B;
 }
 #yourStreamsTitle h3 {
   padding: 0.2em;
