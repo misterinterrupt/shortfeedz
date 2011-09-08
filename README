@@ -1,10 +1,13 @@
-/* 
- * ShortFeedz
- * eventually a project to make short urls for custom twitter filters..
- * for now, a quick n' dirty script to get some streaming messages in the shell
- */
+ 
+ShortFeedz
+by Matt Howell matthewdhowell@gmail.com
 
-On the way to creating this, I am attempting to fill the requirements of this challenge:
+
+The goal of this project is twofold. 
+
+It will be a short url mechanism for realtime twitter streams.
+
+On the way to creating this, It will fill the requirements of this challenge:
 
 -------   -------   -------   -------   -------   -------
 Twitter Feed Real-Time Parser Problem 
@@ -22,4 +25,9 @@ Build a twitter feed reader following these specifications and guidelines:
    * receive updates in real time. 
    * Should be able to add and remove feeds up watch updates in real time.
 We would like you to use NodeJS and jQuery and write the entire application in javascript, HTML and CSS. You can use 3rd party libraries for NodeJS, but the only one allowed client-side is jQuery.
-It should be possible to use the backend from the command line as well as the frontend. The solution will be graded on modularity, extensibility andreadability.
+It should be possible to use the backend from the command line as well as the frontend. The solution will be graded on modularity, extensibility and readability.
+
+
+These requirements are filled at the completion of what is currently the user accounts page.
+After signing in to Twitter, one can create and modify Twitter search streams. 
+These streams can be selected for viewing in real time.
