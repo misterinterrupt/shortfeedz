@@ -6,12 +6,17 @@ var assert  = require('assert'),
 // get a testing framework! these are linearly dependant :(
 
 var streamTests = flow.define(
+  
+  
   function testSetup (redisClient) {
     console.log('setup for stream model');
     console.log('run from: ' + __filename);
     this.client = redisClient;
     this();
   },
+  
+  
+  
   function testSave (err) {
     if(err) throw err;
     this.s1 = new Stream(this.client, 'save');  
@@ -25,9 +30,12 @@ var streamTests = flow.define(
     console.log('A Stream gets an id upon Stream.save');
     this();
   },
+  
+  
+  
   function testGet (err) {
     if(err) throw err;
-    this.s2 = new Stream(this.client);
+    this.s2 = {};
     Stream.get(this.client, 1, this);
   },
   function testGetReturn (err, stream) {
@@ -38,6 +46,9 @@ var streamTests = flow.define(
     console.log('A stream is retrieved from redis via Stream.get');
     this();
   },
+  
+  
+  
   function testGetAll (err) {
     if(err) throw err;
     var strms = {};
@@ -50,28 +61,37 @@ var streamTests = flow.define(
     console.log('A user\'s streams are retrieved from redis via Stream.getAll');
     this();
   },
+  
+  
   function testUpdate (err) {
     if(err) throw err;
-    var s3 = this.s3 = new Stream(this.client),
-    testReturn = this,
-    params = { terms:'update' + new Date},
-    update = function (err, stream) {
-      testReturn.updatingId = stream.id;
-      s3 = stream;
-      s3.update(params, testReturn);
-    };
-    Stream.get(this.client, 1, update);
+    var testReturn = this,
+        params = { terms:'updated ' + new Date },
+        s3 = this.s3 = new Stream(this.client, 'save for update');
+    
+    this.s3.save(function (err, stream) {
+      if(err) throw err;
+      testReturn.s3 = stream;
+      testReturn.s3.update(params, testReturn);
+    });
   },
+  
+  
+  
   function testUpdateReturn (err, stream) {
     if(err) throw err;
-    this.s4 = stream;
-    var updatedAtType = Object.prototype.toString.call(this.s4.updatedAt);
-    assert.equal(this.s4.id, this.updatingId, 'The id changed from ' + this.updatingId + ' to ' + this.s4.id + ' while updating.')
-    assert.equal(this.s4.terms.indexOf('update'), 0, 'prop terms on stream object should be "update" after Stream.update, it was ' + this.s4.terms);
+    var updatedAtType = Object.prototype.toString.call(this.s3.updatedAt),
+        createdAtType = Object.prototype.toString.call(this.s3.createdAt);
+    assert.equal(this.s3.id, stream.id, 'The id changed from ' + stream.id + ' to ' + this.s3.id + ' while updating.')
+    assert.equal(this.s3.terms.indexOf('updated '), 0, 'prop terms on stream object should be "update" after Stream.update, it was ' + this.s3.terms);
     assert.equal(typeof updatedAtType, 'string', 'prop updatedAt missing on stream object after Stream.update, it was ' + updatedAtType);
+    assert.equal(typeof createdAtType, 'string', 'prop createdAt missing on stream object after Stream.update, it was ' + createdAtType);
     console.log('A stream\'s props are updated via Stream.update');
     this();
   },
+  
+  
+  
   function testDestroy (err) {
     if(err) throw err;
     // create a stream
@@ -80,13 +100,14 @@ var streamTests = flow.define(
     // save a stream
     this.s5.save(function (err, stream) {
       if(err) throw err;
-      var id = stream.id;
+      
+      checkDestroyed.s5 = stream;
       // test out stream.destroy
       checkDestroyed.s5.destroy(function (err) {
         if(err) throw err;
         // to check redis directly for streams:[id] it will return null if it's gone
         // use: checkDestroyed.client.hexists('streams:' + id - 1, checkDestroyed);
-        Stream.get(checkDestroyed.client, id, checkDestroyed);
+        Stream.get(checkDestroyed.client, checkDestroyed.s5.id, checkDestroyed);
       });
     });    
   },
@@ -100,12 +121,20 @@ var streamTests = flow.define(
     console.log('A stream is removed from redis via Stream.destroy');
     this();
   },
+  
+  
+  
   function testTearDown (err) {
     if(err) throw err;
     console.log('tearDown')
     process.exit();
   }
+  
+  
+  
 );
+
+
 
 client.on('ready', function () {
   console.log("Redis connected at " + client.host + ":" + client.port);
