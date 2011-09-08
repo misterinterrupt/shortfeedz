@@ -11,7 +11,8 @@ var Stream = module.exports = function Stream(redisClient, terms) {
   
   if (typeof terms != 'undefined') { // normal creation
     this.terms = terms;
-    this.createdAt = new Date;
+    var date = new Date();
+    this.createdAt = date.toString();
   } else { // if we are going to manually set properties after using .get
     this.terms = null;
     this.createdAt = null;
@@ -91,7 +92,8 @@ Stream.prototype.save = function (fn) {
 };
 
 Stream.prototype.update = function(data, fn){
-  this.updatedAt = new Date;
+  var date = new Date();
+  this.updatedAt = date.toString();
   if (undefined != data.terms) {
     this.terms = data.terms;
   }
@@ -145,6 +147,8 @@ module.exports.getAll = function(redisClient, userId, fn) {
 
 module.exports.get = function(redisClient, id, fn) {
   redisClient.hgetall('streams:' + id, function(err, reply) {
+    //console.log('stream.get');
+    //console.dir(reply);
     if(err || reply === null) {
       fn(err, {});
     } else {
@@ -166,7 +170,7 @@ module.exports.destroy = function(redisClient, id, fn) {
       fn(new Error('stream ' + stream.id + ' does not exist'));
     } else {
       // replace ids with a real user id when users are set up
-      client.lrem('users:0:streams:', -1, stream.id, function (err) {
+      client.lrem('users:0:streams', -1, stream.id, function (err) {
         if(err) throw err;
         client.del('streams:' + stream.id, function (err) {
           fn(err);

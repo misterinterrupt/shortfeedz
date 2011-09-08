@@ -35,7 +35,7 @@ var streamTests = flow.define(
     this.s2 = stream;
     assert.equal(typeof this.s2.terms, 'string', 'prop terms missing on stream object after Stream.get');
     assert.equal(typeof this.s2.createdAt, 'string', 'prop createdAt missing on stream object after Stream.get');
-    console.log('A stream are retrieved from redis via Stream.get');
+    console.log('A stream is retrieved from redis via Stream.get');
     this();
   },
   function testGetAll (err) {
@@ -44,7 +44,7 @@ var streamTests = flow.define(
     Stream.getAll(this.client, 0, this);
   },
   function testGetAllReturn (err, streams) {
-    this.allStreams = streams;
+    this.allStreams = streams; 
     assert.equal(Object.prototype.toString.call(this.allStreams), '[object Array]', 'An array was not returned from Stream.getAll');
     assert.equal(this.allStreams.length > 0, true, 'Stream.getAll returned 0 objects');
     console.log('A user\'s streams are retrieved from redis via Stream.getAll');
@@ -54,19 +54,21 @@ var streamTests = flow.define(
     if(err) throw err;
     var s3 = this.s3 = new Stream(this.client),
     testReturn = this,
-    params = { terms:'update' },
+    params = { terms:'update' + new Date},
     update = function (err, stream) {
-        s3 = stream;
-        s3.update(params, testReturn);
-      };
+      testReturn.updatingId = stream.id;
+      s3 = stream;
+      s3.update(params, testReturn);
+    };
     Stream.get(this.client, 1, update);
   },
   function testUpdateReturn (err, stream) {
     if(err) throw err;
     this.s4 = stream;
     var updatedAtType = Object.prototype.toString.call(this.s4.updatedAt);
-    assert.equal(this.s4.terms, 'update', 'prop terms on stream object should be "update" after Stream.update, it was ' + this.s4.terms);
-    assert.equal(updatedAtType, '[object Date]', 'prop updatedAt missing on stream object after Stream.update, it was ' + updatedAtType);
+    assert.equal(this.s4.id, this.updatingId, 'The id changed from ' + this.updatingId + ' to ' + this.s4.id + ' while updating.')
+    assert.equal(this.s4.terms.indexOf('update'), 0, 'prop terms on stream object should be "update" after Stream.update, it was ' + this.s4.terms);
+    assert.equal(typeof updatedAtType, 'string', 'prop updatedAt missing on stream object after Stream.update, it was ' + updatedAtType);
     console.log('A stream\'s props are updated via Stream.update');
     this();
   },
