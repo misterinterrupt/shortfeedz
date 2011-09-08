@@ -16,13 +16,31 @@ var HOST = "127.0.0.1",
     express = require('express'),
     auth = require('connect-auth'),
     jade = require('jade'),
-    oauth_config = require('./oauth_config');
-    
-    // TwitReader = require('./lib/TwitReader');
-// var arg_obj = {'oauth_config' : oauth_config,
-//                'keywords' :[KEYWORD]};
-  
-// var t = new TwitReader(arg_obj);
+    oauth_config = require('./oauth_config'),
+    TwitReader = require('./lib/TwitReader'),
+    StreamParser = require('./lib/StreamParser.js');
+
+    var arg_obj = {'oauth_config' : oauth_config,
+                   'keywords' :[KEYWORD]};
+
+    var twit = new TwitReader(arg_obj),
+        parser = new StreamParser(';');
+
+    console.log('resuming stdin');
+
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', function (chunk) {
+      process.stdout.write('got some data: ' + chunk);
+      parser.parseChunk(chunk);
+    });
+    parser.on('data', function (data) {
+      arg_obj.keywords = data;
+      process.stdout.write('got some data: ' + data);
+      twit = new TwitReader(arg_object);
+    })
+
+
 
 var app = module.exports = express.createServer();
 
@@ -52,5 +70,8 @@ require('./routes/account')(app);
 if (!module.parent) {
   app.listen(PORT);
   console.log('ShortFeedz started at ' + HOST + ':' + PORT);
+
 }
+
+
 
