@@ -7,8 +7,6 @@
 // in order to get args, use this:
 var args = process.argv.slice();
 
-var KEYWORD = args[2] || ['global'];
-console.log("Using keyword " + KEYWORD);
 
 var HOST = "127.0.0.1",
     PORT = 4444,
@@ -20,24 +18,27 @@ var HOST = "127.0.0.1",
     TwitReader = require('./lib/TwitReader'),
     StreamParser = require('./lib/StreamParser.js');
 
+var cmdTwitReader = function (oauth_config, keyword_arr) {
+  
     var arg_obj = {'oauth_config' : oauth_config,
-                   'keywords' :[KEYWORD]};
-
+                   'keywords' :keyword_arr};
+                   
     var twit = new TwitReader(arg_obj),
         stdin = process.stdin,
         stdout = process.stdout;
-
-    stdout.write('\nType a search string and hit enter to change this running feed. \n');
-
+    stdout.write('\n\n\n\n\n:::: Twit Commander ::::\n');
+    stdout.write('\nUsing keywords ' + arg_obj.keywords);
+    stdout.write('\nType a search string and hit enter to change this running feed. \n\n\n\n\n');
     stdin.resume();
     stdin.setEncoding('utf8');
+    
     stdin.on('data', function (chunk) {
       stdout.write('changing stream to: ' + chunk.toString());
       arg_obj['keywords'] = [chunk.toString().trim()];
       twit = null;  
       twit = new TwitReader(arg_obj);
     });
-
+}
 
 var app = module.exports = express.createServer();
 
@@ -68,6 +69,10 @@ if (!module.parent) {
   app.listen(PORT);
   console.log('ShortFeedz started at ' + HOST + ':' + PORT);
 
+}
+
+if(args[2]) {
+  cmdTwitReader(oauth_config, [args[2]]);
 }
 
 
