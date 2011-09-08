@@ -9,7 +9,7 @@
 body {
   background-color: #000;
   color: #80C8FE;
-  font: 13.34px helvetica,arial,freesans,clean,sans-serif;
+  font: 15.54px helvetica,arial,freesans,clean,sans-serif;
   line-height: 1.4;
   padding: 0;
   margin: 0;
@@ -29,6 +29,10 @@ h1, h2, h3{
 
 .terms {
   font-size: 120%;
+}
+
+.delete {
+  cursor: pointer;
 }
 
 .created, .updated {

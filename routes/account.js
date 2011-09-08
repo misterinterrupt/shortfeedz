@@ -59,10 +59,11 @@ module.exports = function (app) {
     
   // update a stream
   app.put('/account/stream/:id([0-9]+)', function (req, res) {
+    
     var terms = req.body.terms,
         updateId = req.params.id,
         client = redis.createClient();
-    console.log(updateId);
+    
     client.on('ready', function (err) {
       if(err) throw err;
       Stream.get(client, updateId, function (err, stream) {
@@ -87,17 +88,22 @@ module.exports = function (app) {
   
   // delete a stream
   app.del('/account/stream/:id([0-9]+)', protect, function (req, res) {
-    var id = req.body.id;
-    var client = redis.createClient();
+    var updateId = req.params.id,
+        client = redis.createClient();
+    
     client.on('ready', function (err) {
       if(err) throw err;
-      stream.destroy(id, function(err) {
-        if(err) throw err;
+      
+      Stream.destroy(client, updateId, function (err) {
+        if(err) {
+          console.error(err);
+          res.send(500);
+        }
+        res.send(200);
         client.quit();
-        id = null;
-        client = null;
-        res.redirect('/account');
+        terms = updateId = client = null;
       });
+      
     });
   });
 }
