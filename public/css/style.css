@@ -1,0 +1,114 @@
+/*
+ * scheme
+ * #CC0099 magenta-ish
+ * #00477D darkest
+ * #BFE3FE lightest
+ * #80C8FE bright
+ */
+
+body {
+  background-color: #000;
+  color: #80C8FE;
+  font: 13.34px helvetica,arial,freesans,clean,sans-serif;
+  line-height: 1.4;
+  padding: 0;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3{
+  color: #CC0099;
+}
+
+
+/* Type */
+
+.terms {
+  font-size: 120%;
+}
+
+.created, .updated {
+  font-size: 80%;
+  margin: 0.2em 0;
+  color: #BFE3FE;
+}
+
+.tip {
+  font-size: 75%;
+  margin: 0;
+  color: #ccc;
+}
+
+
+/* Layout */
+
+#container {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 0;
+  margin: 1em;
+}
+
+#accountTop {
+  position: fixed;
+  background-color: #000;
+  z-index: 14;
+  top: 0;
+  left: 2em;
+  width: 100%;
+  border-bottom: 1px dashed #6B006B;
+  padding: 1em;
+  margin: 0 0 1em 0;
+}
+#accountNav, #createStream {
+  float: left;
+  width: 28em;
+  height: 10em;
+  padding: 0;
+  margin: 0;
+}
+
+#yourStreamsTitle {
+  position: fixed;
+  background-color: #000;
+  z-index: 14;
+  top: 9.8em;
+  left: 2em;
+  width: 24em;
+  border-left: 1px dashed #6B006B;
+  border-right: 1px dashed #6B006B;
+}
+#yourStreamsTitle h3 {
+  padding: 0.2em;
+  margin:0;
+}
+
+#yourStreams {
+  position: absolute;
+  border-left: 1px dashed #6B006B;
+  border-right: 1px dashed #6B006B;
+  top: 11em;
+  float: left;
+  width: 24em;
+  padding: 1em;
+  margin: 0 1em 5em 1em;
+}
+
+form#streamForm {
+  margin: 1em 0;
+}
+
+ul#streams {
+  padding: 0;
+}
+ul#streams li {
+  margin: 0 0.4em 1em 0.4em;
+  list-style: none;
+}
+
