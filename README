@@ -30,4 +30,4 @@ It should be possible to use the backend from the command line as well as the fr
 
 These requirements are filled at the completion of what is currently the user accounts page.
 After signing in to Twitter, one can create and modify Twitter search streams. 
-These streams can be selected for viewing in real time.
+this part isn't done yet >> These streams can be selected for viewing in real time.
