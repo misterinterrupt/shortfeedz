@@ -9,13 +9,12 @@ var Stream = module.exports = function Stream(redisClient, terms) {
   
   this.redisClient = redisClient;
   
-  if (typeof terms != 'undefined') { // normal creation
+  if (typeof terms != 'undefined') {
     this.terms = terms;
     var date = new Date();
     this.createdAt = date.toString();
-  } else { // if we are going to manually set properties after using .get
-    this.terms = null;
-    this.createdAt = null;
+  } else {
+    throw new Error('terms must be defined upon creation of a stream.');
   }
   
   this.redisClient.on("error", function (err) {
@@ -25,33 +24,37 @@ var Stream = module.exports = function Stream(redisClient, terms) {
 
 Stream.prototype.save = function (fn) {
   var that = this;
-  
+
+  // this flow has 3 steps and a finish
   var saveIt = flow.define(
+
+    
     // increment global:nextStreamId if we are saving a new stream
     function (stream, cb) {
       this.stream = stream;
       // only increment if we need to, i.e. new vs update
       if(typeof this.stream.id === 'undefined') {
+        
         this.stream.redisClient.incr('global:nextStreamId', this);
       } else {
-        this(null, null);
+        this(null, this.stream.id);
       }
     },
+
+    
     // save the object as a hash key e.g. hmset streams:[stream id] id stream.id terms stream.terms createdAt stream.createdAt
     function (err, id) {
       if(err) throw err;
       
-      // set id if there is an id to set
-      if(typeof id === 'number') {
-        this.stream.id = id;
-      }
+      this.stream.id = id;
+      
       
       var streamProps = {
           'id' : this.stream.id,
           'terms' : this.stream.terms,
           'createdAt' : this.stream.createdAt
         };
-        
+      
       // set updatedAt if this was an update 
       if(typeof this.stream.updatedAt !== 'undefined') {
         streamProps.updatedAt = this.stream.updatedAt;
@@ -59,41 +62,55 @@ Stream.prototype.save = function (fn) {
       
       this.stream.redisClient.hmset('streams:' + this.stream.id, streamProps, this);
     },
+
+    
     // push stream id onto user's streams if it isn't already there
     function (err) {
       if(err) throw err;
       var that = this;
+      
       // replace ids with a real user id when users are set up
       this.stream.redisClient.lrange('users:0:streams', 0, -1, function (err, list) {
         if (Object.prototype.toString.call(list) === '[object Array]') {
+          
           var inList = false;
+          
           for(var i=0; i<list.length; i++) {
-            if(list[i] === that.stream.id) {
+            if(list[i] === that.stream.id.toString()) { // make sure this is a string or waste time
               inList = true;
               break;
             }
           }
+          
           if(!inList){
             that.stream.redisClient.lpush('users:0:streams', that.stream.id, that);
           } else {
             that();
           }
+          
         } else {
           that();
         }
       });
     },
+
+    
     // get back to business
     function (err) {
       if(err) throw err;
       fn(null, this.stream);
     } ); // end flow.define
+
+  
   saveIt(that, fn)
+
 };
 
 Stream.prototype.update = function(data, fn){
+  
   var date = new Date();
   this.updatedAt = date.toString();
+  
   if (undefined != data.terms) {
     this.terms = data.terms;
   }
@@ -146,16 +163,15 @@ module.exports.getAll = function(redisClient, userId, fn) {
 };
 
 module.exports.get = function(redisClient, id, fn) {
+  
   redisClient.hgetall('streams:' + id, function(err, reply) {
-    //console.log('stream.get');
-    //console.dir(reply);
-    if(err || reply === null) {
-      fn(err, {});
+    if(err || typeof reply.id === 'undefined') {
+      fn(err, reply);
     } else {
-      var stream = new Stream(redisClient);
+      
+      var stream = new Stream(redisClient, reply.terms);
       stream.id = reply.id;
       stream.createdAt = reply.createdAt;
-      stream.terms = reply.terms;
       fn(null, stream);
     }
   });
