@@ -1,18 +1,28 @@
-h2 User Account
-p Welcome!
-div.yourStreams
+div#accountTop
+  div#accountNav
+    h2 User Account
+    p Welcome to ShortFeedz!
+
+  div#createStream
+    h3 Create a new Stream
+    p.tip
+         | separate multiple terms with spaces <br>
+         | use @ syntax for public user streams
+    form(method='post', action='/account/stream')#streamForm
+      input(name='terms')
+      input(type='submit', value='create')
+
+div#yourStreamsTitle
   h3 Your Streams
-  ul#stream
-    - each stream, id in streams
-      li(class='stream-' + id) 
-        p.terms terms: #{stream.terms}
-          span.tip
-                  |  click terms to edit  
-        p.created created: #{stream.createdAt}
-        p.updated updated: #{stream.lastUpdated}
-        div(class='realtime-display-' + id)
-div.newStream
-  h3 Create a new Stream
-  form(method='post', action='/account/stream')#newStream
-    input(name='terms')
-    input(type='submit', value='create')
+
+div#yourStreams
+    ul#streams
+      - each stream, id in streams
+        li(class='stream-' + id) 
+          p 
+            span(id=id).terms #{stream.terms}
+            span.tip
+                    |  click to edit  
+          p.created created: #{stream.createdAt}
+          p.updated updated: #{stream.updatedAt}
+          div(class='realtime-display-' + id)
