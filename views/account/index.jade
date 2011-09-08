@@ -16,13 +16,13 @@ div#yourStreamsTitle
   h3 Your Streams
 
 div#yourStreams
-    ul#streams
-      - each stream, id in streams
-        li(class='stream-' + id) 
-          p 
-            span(id=id).terms #{stream.terms}
-            span.tip
-                    |  click to edit  
-          p.created created: #{stream.createdAt}
-          p.updated updated: #{stream.updatedAt}
-          div(class='realtime-display-' + id)
+  ul#streams
+    - each stream, id in streams
+      li(class='stream-' + id) 
+        p 
+          span(id=id).terms #{stream.terms}
+          span.tip
+                  |  click to edit  
+        p.created created: #{stream.createdAt}
+        p.updated updated: #{stream.updatedAt}
+        div(class='realtime-display-' + id)
