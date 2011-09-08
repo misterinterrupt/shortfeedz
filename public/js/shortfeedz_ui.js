@@ -7,6 +7,7 @@ var shortfeedz = function (){
     del: '/account/stream/' // delete
   };
   this.termsSelector = 'ul#streams li p span.terms';
+  this.streamDeleteSelector = 'ul#streams li p span.delete';
 };
 
 /* 
@@ -17,6 +18,7 @@ var shortfeedz = function (){
  */
 shortfeedz.prototype.init = function () {
   $(this.termsSelector).click(this.termsClickHandler);
+  $(this.streamDeleteSelector).click(this.streamDeleteHandler);
 }
 
 shortfeedz.prototype.termsClickHandler = function (ev) {
@@ -63,7 +65,7 @@ shortfeedz.prototype.termsEditedHandler = function (ev) {
   inputNode.unbind('keypress', this.termsEditedHandler);
 
   // TODO:: validate for lack of terms, empty strings
-  // update terms ion the backend
+  // update terms on the backend
   $.ajax({
     url: ShortFeedz.accountStreamRoutes.update + streamId,
     type: 'PUT',
@@ -80,6 +82,26 @@ shortfeedz.prototype.termsEditedHandler = function (ev) {
       var oldVal = $.data(termsSpan[0], 'history').pop();
       termsSpan.html(oldVal);
       termsSpan.click(ShortFeedz.termsClickHandler);
+    }
+  });
+}
+
+
+// to delete a stream, click the little [x]
+shortfeedz.prototype.streamDeleteHandler = function (ev) {
+  
+  var deleteButton = $(this),
+      streamId = deleteButton.siblings('.terms').attr('id'),
+      listItem = deleteButton.parent().parent();
+  
+  $.ajax({
+    url: ShortFeedz.accountStreamRoutes.del + streamId,
+    type: 'DELETE',
+    success: function(data) {
+      $(listItem).remove();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      // TODO:: throw up a little message explaining why the word won't save like it should ;)
     }
   });
 }
