@@ -14,6 +14,7 @@ var HOST = "127.0.0.1",
     express = require('express'),
     auth = require('connect-auth'),
     jade = require('jade'),
+    RedisStore = require('connect-redis')(express),
     oauth_config = require('./oauth_config'),
     TwitReader = require('./lib/TwitReader'),
     StreamParser = require('./lib/StreamParser.js');
@@ -42,14 +43,29 @@ var cmdTwitReader = function (oauth_config, keyword_arr) {
 
 var app = module.exports = express.createServer();
 
+// app.dynamicHelpers is middleware sugar for setting view-render-time vars
+// i.e.
+//  var messages = require('express-messages');
+//  module.exports = function (req, res, next) {
+//    res.locals.message = messages(req,res);
+//    next();
+//  }
+app.dynamicHelpers({
+  messages: require('express-messages')
+});
+
 
 app.configure( function () {
+  
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
+  
   app.use(express.logger('dev'));
   app.use(express.static(__dirname + '/public'));
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
   app.use(express.cookieParser());
-  app.use(express.session({ secret: 'rootmusic' }));
+  app.use(express.session({ secret: 'rootmusic', store: new RedisStore }));
   app.use(auth( {
     strategies: auth.Twitter(
       { consumerKey: oauth_config.consumerKey, 
@@ -57,9 +73,8 @@ app.configure( function () {
       }),
     trace: true
   }) );
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
   app.use(app.router);
+
 });
 
 require('./routes/shortfeedz')(app);

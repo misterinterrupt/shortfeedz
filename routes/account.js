@@ -2,16 +2,20 @@ var Stream = require('../models/stream')
     redis = require('redis');
 
 function protect(req, res, next) {
-  if( req.isAuthenticated() ) next();
-  else {
+  if( req.isAuthenticated() ) {
+    console.dir(req.session.auth.user);
+    next();
+  } else {
     req.authenticate('twitter', function(error, authenticated) {
       if( error ){
         next(new Error("Problem authenticating"));
         console.dir(error);
       } else {
-        if( authenticated === true) next();
-        else if( authenticated === false ) next(new Error("Access Denied!"));
-        else {
+        if( authenticated === true) {
+          next();
+        } else if( authenticated === false ) {
+          next(new Error("Access Denied!"));
+        } else {
           // Abort processing, browser interaction was required (and has happened/is happening)
         }
       }
@@ -34,13 +38,10 @@ module.exports = function (app) {
         res.render('account/index', { streams : streams });
       });
     });
-    
   });
   
-  // TODO:: protect these routes!
-
   // post creation of new stream
-  app.post('/account/stream', function (req, res) {
+  app.post('/account/stream', protect, function (req, res) {
     var terms = req.body.terms;
     var client = redis.createClient();
     client.on('ready', function (err) {
@@ -58,7 +59,7 @@ module.exports = function (app) {
 
     
   // update a stream
-  app.put('/account/stream/:id([0-9]+)', function (req, res) {
+  app.put('/account/stream/:id([0-9]+)', protect, function (req, res) {
     
     var terms = req.body.terms,
         updateId = req.params.id,
